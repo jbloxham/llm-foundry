@@ -354,11 +354,13 @@ def auto_packing_ratio(
     # If max_seq_len is very small, skip profiling and select packing ratio of 1.
     dataset_config = dataloader_cfg['dataset']
     max_seq_len = dataset_config.get('max_seq_len')
+    log.warning(f'{max_seq_len=}')
     if max_seq_len <= 100:
         return 1
 
     min_ratio = 1
     max_ratio = max_seq_len / 100
+    log.warning('before profile_packing')
     profiling_results = profile_packing(
         dataloader_cfg=dataloader_cfg,
         tokenizer=tokenizer,
@@ -367,6 +369,7 @@ def auto_packing_ratio(
         num_packing_ratios=num_packing_ratios,
         device_batch_size=device_batch_size,
     )
+    log.warning(f'{profiling_results=}')
 
     # Obtain the maximum packing_ratio/minimum padding that has no waste.
     # profiling_results are sorted from smallest to largest packing_ratio.
@@ -412,6 +415,7 @@ def profile_packing(
     Returns:
         An iterable of tuples of packing ratio, padding, and waste, sorted by smallest to largest packing ratio.
     """
+    log.warning('in profile packing')
     import copy
 
     from llmfoundry.data.dataloader import build_dataloader
@@ -424,8 +428,8 @@ def profile_packing(
     dataloader_cfg = copy.deepcopy(dataloader_cfg)
     dataloader_cfg.update({
         'drop_last': False,
-        'num_workers': 0,
-        'prefetch_factor': None,
+        # 'num_workers': 0,
+        # 'prefetch_factor': None,
         'persistent_workers': False,
     })
     dataloader_cfg['dataset']['packing_ratio'] = 1.0
@@ -451,6 +455,8 @@ def profile_packing(
             tmp_path = gathered_paths[local_rank_zero]
             stream_config['local'] = tmp_path
 
+    log.warning(f'{min_ratio=}')
+    log.warning(f'{max_ratio=}')
     # Determine the packing_ratio values we'll try
     packing_ratios, raw_batch_sizes = [], []
     for packing_ratio in np.linspace(
@@ -465,6 +471,8 @@ def profile_packing(
             packing_ratios.append(packing_ratio)
             raw_batch_sizes.append(raw_batch_size)
 
+    log.warning(f'{packing_ratios=}')
+    log.warning(f'{raw_batch_sizes=}')
     n_profile_examples = max(raw_batch_sizes) * 100
 
     train_dataspec = build_dataloader(
@@ -473,12 +481,15 @@ def profile_packing(
         n_profile_examples,
     )
     train_dataloader = train_dataspec.dataloader
+    log.warning('somewhere in profile packing 2')
 
     # Get a bunch of raw examples
     big_batch = next(iter(train_dataloader))
+    log.warning('got the big batch')
 
     # Cut everything down to size
     sizes, trimmed_examples = _trim_batch(big_batch)
+    log.warning('trimmed the big batch')
 
     def profile(raw_batch_size: int) -> Tuple[Optional[float], Optional[float]]:
         # Copy trimmed examples so that the dicts are not shared between profiling runs.
@@ -517,6 +528,7 @@ def profile_packing(
 
     log.debug('Profiling packing ratios')
     total_packing_ratios = min(len(packing_ratios), len(raw_batch_sizes))
+    log.warning(f'{packing_ratios=}')
     for i, (packing_ratio,
             raw_batch_size) in enumerate(zip(packing_ratios, raw_batch_sizes)):
         log.debug(
