@@ -895,6 +895,8 @@ class DatasetConstructor:
 
             columns_to_remove = list(dataset[0].keys())
             print('we are here')
+            process = psutil.Process(os.getpid())
+            memory_info = process.memory_info()
             print(f"Memory usage: {memory_info.rss / 1024 / 1024:.2f} MB")
             print(f"Available memory: {psutil.virtual_memory().available / 1024 / 1024:.2f} MB")
             print(f"Available disk space: {psutil.disk_usage('/').free / 1024 / 1024:.2f} MB")
