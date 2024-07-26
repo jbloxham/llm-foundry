@@ -894,6 +894,14 @@ class DatasetConstructor:
 
             columns_to_remove = list(dataset[0].keys())
             print('we are here')
+            logger.info(f"Memory usage: {memory_info.rss / 1024 / 1024:.2f} MB")
+            logger.info(f"Available memory: {psutil.virtual_memory().available / 1024 / 1024:.2f} MB")
+            logger.info(f"Available disk space: {psutil.disk_usage('/').free / 1024 / 1024:.2f} MB")
+            with open('/proc/meminfo', 'r') as f:
+                meminfo = f.read()
+            hugepages_total = int([l for l in meminfo.split('\n') if 'HugePages_Total' in l][0].split()[1])
+            hugepages_free = int([l for l in meminfo.split('\n') if 'HugePages_Free' in l][0].split()[1])
+            print(f"HugePages Total: {hugepages_total}, Free: {hugepages_free}")
             tokenized_dataset = dataset.map(
                 dataset_mapper,
                 batched=False,
