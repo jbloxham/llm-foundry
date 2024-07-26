@@ -893,6 +893,7 @@ class DatasetConstructor:
             num_cpus_to_use = max(1, detected_cpus_with_margin)
 
             columns_to_remove = list(dataset[0].keys())
+            print('we are here')
             tokenized_dataset = dataset.map(
                 dataset_mapper,
                 batched=False,
