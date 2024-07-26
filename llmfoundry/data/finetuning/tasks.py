@@ -945,6 +945,12 @@ class DatasetConstructor:
             with open(signal_file_path, 'wb') as f:
                 f.write(b'local_rank0_completed_data_prep')
 
+        with open('/proc/meminfo', 'r') as f:
+            meminfo = f.read()
+        hugepages_total = int([l for l in meminfo.split('\n') if 'HugePages_Total' in l][0].split()[1])
+        hugepages_free = int([l for l in meminfo.split('\n') if 'HugePages_Free' in l][0].split()[1])
+        print(f"HugePages Total: {hugepages_total}, Free: {hugepages_free}")
+
         # All ranks sync up at this barrier, having completed data processing
         dist.barrier()
 
