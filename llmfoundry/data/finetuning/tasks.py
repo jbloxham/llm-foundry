@@ -882,6 +882,11 @@ class DatasetConstructor:
             )
 
             def dataset_mapper(example: Dict):
+                with open('/proc/meminfo', 'r') as f:
+                    meminfo = f.read()
+                hugepages_total = int([l for l in meminfo.split('\n') if 'HugePages_Total' in l][0].split()[1])
+                hugepages_free = int([l for l in meminfo.split('\n') if 'HugePages_Free' in l][0].split()[1])
+                print(f"HugePages Total: {hugepages_total}, Free: {hugepages_free}")
                 if preprocessing_fn is not None:
                     return tokenize_formatted_example(
                         preprocessing_fn(example),
